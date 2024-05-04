@@ -25,12 +25,11 @@ class ProxyServer: # Only HTTP now
             request_data = await client_socket.read()
             method, address, _ = request_data.splitlines()[0].split()
             client_address = client_socket.writer.get_extra_info("peername")
-
-            self.logger.info(
-                f"New connection from client\t{client_address[0]}:{client_address[1]}"
-            )
             
             if method == b"CONNECT":
+                self.logger.info(
+                    f"New HTTPS connection from client\t{client_address[0]}:{client_address[1]}"
+                )
                 remote_socket = await AsyncioSocket.open_connection(
                     *address.split(b":"), self.__buffer_size, self.logger
                 )
@@ -56,6 +55,10 @@ class ProxyServer: # Only HTTP now
                 return
 
             else:
+                self.logger.info(
+                    f"New HTTP connection from client\t{client_address[0]}:{client_address[1]}"
+                )
+
                 remote_socket: AsyncioSocket = await AsyncioSocket.open_connection(
                     address, 80, self.__buffer_size, self.logger
                 )
