@@ -28,7 +28,7 @@ class ProxyServer: # Only HTTP now
             
             if method == b"CONNECT":
                 self.logger.info(
-                    f"New HTTPS connection from client\t{client_address[0]}:{client_address[1]}"
+                    f"New HTTPS connection from client {client_address[0]}:{client_address[1]}"
                 )
                 remote_socket = await AsyncioSocket.open_connection(
                     *address.split(b":"), self.__buffer_size, self.logger
@@ -43,7 +43,7 @@ class ProxyServer: # Only HTTP now
                         req_decoded = request_data.decode()
                         res_decoded = "HTTP/1.1 418 I'm a teapot\r\n" + \
                             "\nThis is not site, this is proxy" + \
-                            f"\n\nThe data that you have sent:\n {req_decoded}\r\n\r\n"
+                            f"\nThe data that you have sent:\n\n{req_decoded}\r\n\r\n"
                         response_data = res_decoded.encode()
                     case _:
                         response_data = HTTPStatus.HTTP_404
@@ -56,7 +56,7 @@ class ProxyServer: # Only HTTP now
 
             else:
                 self.logger.info(
-                    f"New HTTP connection from client\t{client_address[0]}:{client_address[1]}"
+                    f"New HTTP connection from client {client_address[0]}:{client_address[1]}"
                 )
 
                 remote_socket: AsyncioSocket = await AsyncioSocket.open_connection(

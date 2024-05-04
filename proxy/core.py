@@ -28,7 +28,7 @@ class AsyncioSocket:
             host_ = urlparse(host.decode()).path
 
         reader, writer = await asyncio.open_connection(host_, int(port))
-        logger.info(f"New connection to remote\t{host_}:{int(port)}")
+        logger.info(f"New connection to remote {host_}:{int(port)}")
         logger.debug(f"Count sockets: {len(AsyncioSocket.sockets) + 1}")
         
         return AsyncioSocket(reader, writer, buffer_size)
