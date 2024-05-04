@@ -36,6 +36,24 @@ class ProxyServer: # Only HTTP now
                 )
                 client_socket.write(HTTPStatus.HTTP_200)
                 await client_socket.drain()
+            
+            elif method == b"GET":
+                self.logger.debug(f"New `GET` connection attempt from {client_address[0]}:{client_address[1]}")
+                match address:
+                    case b"/":
+                        req_decoded = request_data.decode()
+                        res_decoded = "HTTP/1.1 418 I'm a teapot\r\n" + \
+                            "\nThis is not site, this is proxy" + \
+                            f"\n\nThe data that you have sent:\n {req_decoded}\r\n\r\n"
+                        response_data = res_decoded.encode()
+                    case _:
+                        response_data = HTTPStatus.HTTP_404
+                
+                client_socket.write(response_data)
+                await client_socket.drain()
+                await client_socket.close()
+                
+                return
 
             else:
                 remote_socket: AsyncioSocket = await AsyncioSocket.open_connection(
