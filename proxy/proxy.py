@@ -159,6 +159,13 @@ class HttpReverseProxy(__BaseAsyncioServer):
 
             await listener.start_proxy()
 
+        except TypeError:
+            client_socket.write(HTTPStatus.HTTP_400)
+            await client_socket.drain()
+            await client_socket.close()
+
+            return
+        
         except socket.gaierror:
             client_socket.write(HTTPStatus.HTTP_502)
             await client_socket.drain()
