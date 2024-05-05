@@ -1,3 +1,4 @@
+import socket
 import asyncio
 import logging
 
@@ -5,11 +6,10 @@ from .resources import HTTPStatus
 from .core import AsyncioSocket, ProxyListener
 
 
-class ProxyServer: # Only HTTP now
-    def __init__(self, ip_address: str, port: int, buffer_size: int, logger: logging.Logger) -> None:
+class __BaseAsyncioServer:
+    def __init__(self, ip_address: str, port: int, logger: logging.Logger):
         self.__ip_address = ip_address
         self.__port = port
-        self.__buffer_size = buffer_size
         self.__server = None
         self.logger = logger
 
@@ -17,6 +17,30 @@ class ProxyServer: # Only HTTP now
     def server_address(self):
         return self.__server.sockets[0].getsockname()
     
+    async def new_client_callback(
+        self, reader: asyncio.streams.StreamReader, writer: asyncio.streams.StreamWriter
+    ):
+        raise NotImplementedError
+
+    async def serve_forever(self):
+        if self.__server is not None:
+            raise ValueError("Server already started")
+
+        self.__server = await asyncio.start_server(
+            self.new_client_callback, self.__ip_address, self.__port
+        )
+
+        self.logger.info(f"Server started at {self.server_address}")
+
+        async with self.__server:
+            await self.__server.serve_forever()
+
+
+class HttpProxyServer(__BaseAsyncioServer): # Only HTTP now
+    def __init__(self, ip_address: str, port: int, logger: logging.Logger, *, buffer_size: int):
+        self.__buffer_size = buffer_size
+        super().__init__(ip_address, port, logger)
+
     async def new_client_callback(
         self, reader: asyncio.streams.StreamReader, writer: asyncio.streams.StreamWriter
     ):
@@ -95,15 +119,59 @@ class ProxyServer: # Only HTTP now
 
             return
 
-    async def serve_forever(self):
-        if self.__server is not None:
-            raise ValueError("Server already started")
 
-        self.__server = await asyncio.start_server(
-            self.new_client_callback, self.__ip_address, self.__port
-        )
+class HttpReverseProxy(__BaseAsyncioServer):
+    def __init__(
+        self,
+        ip_address: str,
+        port: int,
+        logger: logging.Logger,
+        *,
+        buffer_size: int,
+        remote_address: bytes,
+        remote_port: int,
+    ) -> None:
+        self.__buffer_size = buffer_size
+        self.remote_address = remote_address
+        self.remote_port = remote_port
+        super().__init__(ip_address, port, logger)    
 
-        self.logger.info(f"Server started at {self.server_address}")
+    async def new_client_callback(
+        self, reader: asyncio.streams.StreamReader, writer: asyncio.streams.StreamWriter
+    ):
+        try:
+            client_socket = AsyncioSocket(reader, writer, self.__buffer_size)
+            request_data = await client_socket.read()
+            client_address = client_socket.writer.get_extra_info("peername")
 
-        async with self.__server:
-            await self.__server.serve_forever()
+            self.logger.info(
+                f"New connection from client {client_address[0]}:{client_address[1]}"
+            )
+
+            remote_socket: AsyncioSocket = await AsyncioSocket.open_connection(
+                self.remote_address, self.remote_port, self.__buffer_size, self.logger
+            )
+            remote_socket.write(request_data)
+            await remote_socket.drain()
+
+            listener = ProxyListener(client_socket, remote_socket, self.logger)
+            self.logger.debug(f"Count listeners: {len(ProxyListener.listeners)}")
+
+            await listener.start_proxy()
+
+        except socket.gaierror:
+            client_socket.write(HTTPStatus.HTTP_502)
+            await client_socket.drain()
+            await client_socket.close()
+
+            return
+
+        except TimeoutError:
+            await client_socket.private_close()
+
+        except BaseException as ex:
+            self.logger.exception(ex)
+            self.logger.error(request_data)
+
+            return
+

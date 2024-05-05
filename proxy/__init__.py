@@ -1,1 +1,1 @@
-from .proxy import ProxyServer
+from .proxy import HttpProxyServer, HttpReverseProxy
