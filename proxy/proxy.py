@@ -141,22 +141,16 @@ class HttpReverseProxy(__BaseAsyncioServer):
     ):
         try:
             client_socket = AsyncioSocket(reader, writer, self.__buffer_size)
-            request_data = await client_socket.read()
-            client_address = client_socket.writer.get_extra_info("peername")
-
-            self.logger.info(
-                f"New connection from client {client_address[0]}:{client_address[1]}"
-            )
-
             remote_socket: AsyncioSocket = await AsyncioSocket.open_connection(
                 self.remote_address, self.remote_port, self.__buffer_size, self.logger
             )
-            remote_socket.write(request_data)
-            await remote_socket.drain()
-
             listener = ProxyListener(client_socket, remote_socket, self.logger)
-            self.logger.debug(f"Count listeners: {len(ProxyListener.listeners)}")
 
+            client_address = client_socket.writer.get_extra_info("peername")
+            self.logger.info(
+                f"New connection from client {client_address[0]}:{client_address[1]}"
+            )
+            self.logger.debug(f"Count listeners: {len(ProxyListener.listeners)}")
             await listener.start_proxy()
 
         except TypeError:
@@ -178,7 +172,6 @@ class HttpReverseProxy(__BaseAsyncioServer):
 
         except BaseException as ex:
             self.logger.exception(ex)
-            self.logger.error(request_data)
 
             return
 
