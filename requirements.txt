@@ -1,0 +1,3 @@
+httpx # tg_raw_sender
+colorlog # logging.helpers
+python-dotenv # settings.config
