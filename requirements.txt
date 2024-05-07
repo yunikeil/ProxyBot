@@ -3,5 +3,6 @@ colorlog # logging.helpers
 python-dotenv # settings.config
 python-telegram-bot[all] # app.telegram
 pytest # app.tests
+pytest-asyncio # app.tests
 sqlalchemy # models and orm
 asyncpg # async postgresql driver
