@@ -16,6 +16,7 @@ ECHO_SQL: bool = os.getenv("ECHO_SQL").lower() == "true"
 BOT_VERSION: str = os.getenv("BOT_VERSION")
 ADMIN_IDS: list[int] = list(map(int, os.getenv("ADMIN_IDS").strip().split(",")))
 
+TG_TOKEN: str = os.getenv("TG_TOKEN")
 TG_LOG_TOKEN: str = os.getenv("TG_LOG_TOKEN")
 TG_WARNING_LOG_CHANNEL: str = os.getenv("TG_WARNING_LOG_CHANNEL")
 TG_ERROR_LOG_CHANNEL: str = os.getenv("TG_ERROR_LOG_CHANNEL")

@@ -1,15 +1,25 @@
-import logging
-import asyncio
+from telegram import Update
+from telegram.ext import Application
 
-from proxy import HttpReverseProxy, HttpProxyServer
-from proxy.logger import ProxyLogger
+from core.settings import config
+from core.database import init_models
+from core.logging.helpers import create_logger
 
 
-# TODO transfer constants to .env
-async def main():
-    proxy_logger = ProxyLogger("proxy_logger")
-    proxy = HttpReverseProxy("localhost", 8001, proxy_logger, buffer_size=4096, remote_address=b"localhost", remote_port=80)
-    await proxy.serve_forever()
+tg_logger = create_logger("telegram")
+
+
+async def init_application(application: Application) -> None:
+    await init_models()
+    
+    ...
+
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    builder = Application.builder()
+    builder.token(config.TG_TOKEN).post_init(init_application)
+    
+    application = builder.build()
+    application.add_handlers(bot_handlers)
+    
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
