@@ -1,2 +1,2 @@
 #!/bin/sh
-curl -x http://localhost:8000 https://example.com
+curl -x http://localhost:8001 https://example.com
