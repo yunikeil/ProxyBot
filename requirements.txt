@@ -1,3 +1,4 @@
 httpx # tg_raw_sender
 colorlog # logging.helpers
 python-dotenv # settings.config
+python-telegram-bot[all] # app.telegram
