@@ -6,7 +6,7 @@ import httpx
 from core.logging.helpers import create_logger
 
 
-tg_logger = create_logger("telegram")
+telegram_raw_sender_logger = create_logger("telegram_raw_sender")
 
 
 async def split_message(text: str, max_length: int = 4069):
@@ -65,9 +65,9 @@ async def send_telegram_message(
                     target_url, headers=headers, data=json.dumps(data)
                 )
                 if (response.status_code == 200) and need_info_log:
-                    tg_logger.info(f"Telegram message sent to {chat_id}")
+                    telegram_raw_sender_logger.info(f"Telegram message sent to {chat_id}")
                 elif response.status_code != 200 and need_error_log:
-                    tg_logger.error(
+                    telegram_raw_sender_logger.error(
                         f"Telegram message not sended: {response.status_code}; Response_text:\n{response.text}"
                     )
         except BaseException:

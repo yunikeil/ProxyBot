@@ -4,9 +4,10 @@ from telegram.ext import Application
 from core.settings import config
 from core.database import init_models
 from core.logging.helpers import create_logger
+from app.telegram import bot_handlers
 
 
-tg_logger = create_logger("telegram")
+logger = create_logger("telegram")
 
 
 async def init_application(application: Application) -> None:
